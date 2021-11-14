@@ -18,7 +18,7 @@
 
 	memory@0 {
 		device_type = "memory";
-		reg = <0x0 0x0 0x0 0x80000000>;
+		reg = <0x0 0x0 0x0 0x0>;
 	};
 
 	xin32k: xin32k {
@@ -33,6 +33,14 @@
 		clocks = <&cru PLL_APLL>;
 		clock-names = "ext_clock";
 		reset-gpios = <&gpio4 RK_PD4 GPIO_ACTIVE_LOW>;
+	};
+
+	timer2: timer2@ff6b0000 {
+		compatible = "rockchip,rk3288-timer";
+		reg = <0x0 0xff6b0000 0x0 0x20>;
+		interrupts = <GIC_SPI 66 IRQ_TYPE_LEVEL_HIGH>;
+		clocks = <&cru PCLK_TIMER>, <&xin24m>;
+		clock-names = "pclk", "timer";
 	};
 
 	keys: gpio-keys {
@@ -137,10 +145,6 @@
 
 };
 
-&cpu0 {
-	cpu0-supply = <&vdd_cpu>;
-};
-
 &sdmmc {
 	status = "okay";
 	supports-sd;
@@ -155,7 +159,7 @@
 	disable-wp;
 	num-slots = <1>;
 	pinctrl-names = "default";
-	pinctrl-0 = <&sdmmc_clk>, <&sdmmc_cmd>, <&sdmmc_cd>, <&sdmmc_bus4>;
+	pinctrl-0 = <&sdmmc_clk &sdmmc_cmd &sdmmc_cd &sdmmc_bus4>;
 	vmmc-supply = <0x1b>;
 	vqmmc-supply = <0x1c>;
 };
@@ -172,7 +176,7 @@
 	non-removable;
 	num-slots = <1>;
 	pinctrl-names = "default";
-	pinctrl-0 = <&sdio0_bus4>, <&sdio0_cmd>, <&sdio0_clk>, <&sdio0_int>;
+	pinctrl-0 = <&sdio0_bus4 &sdio0_cmd &sdio0_clk &sdio0_int>;
 	sd-uhs-sdr104;
 	supports-sdio;
 	#address-cells = <1>;
@@ -196,8 +200,8 @@
 	non-removable;
 	num-slots = <1>;
 	pinctrl-names = "default";
-	pinctrl-0 = <&emmc_clk>, <&emmc_cmd>, <&emmc_pwr>, <&emmc_bus8>;
-	max-frequency = <0x5f5e100>;
+	pinctrl-0 = <&emmc_clk &emmc_cmd &emmc_pwr &emmc_bus8>;
+	max-frequency = <100000000>;
 	mmc-hs200-1_8v;
 	mmc-ddr-1_8v;
 };
@@ -212,29 +216,16 @@
 	clock-frequency = <400000>;
 
 	vdd_cpu: syr827@40 {
-		compatible = "silergy,syr827";
-		reg = <0x40>;
-		status = "okay";
-		vin-supply = <&vcc_sys>;
-		regulator-compatible = "fan53555-reg";
-		pinctrl-0 = <&vsel1_gpio>;
-		vsel-gpios = <&gpio0 RK_PA0 GPIO_ACTIVE_HIGH>;
-		regulator-name = "vdd_cpu";
-		regulator-min-microvolt = <712500>;
-		regulator-max-microvolt = <1500000>;
-		regulator-ramp-delay = <1000>;
+		compatible = "fcs,fan53555";
 		fcs,suspend-voltage-selector = <1>;
+		reg = <0x40>;
+		regulator-name = "vdd_cpu";
+		regulator-min-microvolt = <850000>;
+		regulator-max-microvolt = <1350000>;
+		regulator-ramp-delay = <1000>;
 		regulator-always-on;
 		regulator-boot-on;
-		regulator-initial-state = <3>;
-
-		regulator-state-standby {
-			regulator-off-in-suspend;
-		};
-
-		regulator-state-mem {
-			regulator-off-in-suspend;
-		};
+		vin-supply = <&vcc_sys>;
 	};
 
 	rk818: pmic@1c {
@@ -467,10 +458,18 @@
 
 &i2c1 {
 	status = "okay";
-	clocks = <&cru &xin32k>;
 	clock-frequency = <400000>;
 
-	touchscreen@24 {
+	ft5046@8 {
+		compatible = "edt,edt-ft5406";
+		reg = <0x08>;
+		interrupt-parent = <&gpio8>;
+		interrupts = <RK_PB1 IRQ_TYPE_EDGE_RISING>;
+		wake-gpios = <&gpio5 RK_PC2 GPIO_ACTIVE_HIGH>;
+		reset-gpios = <&gpio8 RK_PA3 GPIO_ACTIVE_LOW>;
+	};
+
+	cyapa@24 {
 		compatible = "cyprus,cyapa";
 		reg = <0x24>;
 		pinctrl-names = "default";
@@ -530,9 +529,11 @@
 		#size-cells = <0>;
 		led@0 {
 			reg = <0>;
+			default-brightness = <10>;
 		};
 		led@1 {
 			reg = <1>;
+			default-brightness = <10>;
 		};
 	};
 };
@@ -584,9 +585,9 @@
 
 &io_domains {
 	status = "okay";
-	sdcard-supply = <0x1c>;
-	wifi-supply = <0x6d>;
-	dvp-supply = <0x26>;
+	sdcard-supply = <&vccio_sd>;
+	wifi-supply = <&vccio_wl>;
+	dvp-supply = <&vcc_18>;
 };
 
 &usbphy0 {
@@ -599,6 +600,7 @@
 
 &i2s {
 	status = "okay";
+	dmas = <&dmac_bus_ns 0>, <&dmac_bus_ns 1>;
 };
 
 &lvds {
@@ -657,6 +659,21 @@
 	status = "okay";
 };
 
+&timer {
+	status = "disabled";
+};
+
+&dmac_peri {
+	status = "okay";
+};
+
+&dmac_bus_ns {
+	status = "okay";
+};
+
+&dmac_bus_s {
+	status = "disabled";
+};
 
 &pinctrl {
 	pcfg_pull_none_drv_8ma: pcfg-pull-none-drv-8ma {
