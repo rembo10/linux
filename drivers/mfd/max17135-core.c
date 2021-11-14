@@ -274,3 +274,5 @@ static void __exit max17135_exit(void)
  */
 subsys_initcall(max17135_init);
 module_exit(max17135_exit);
+
+MODULE_LICENSE("GPL");
