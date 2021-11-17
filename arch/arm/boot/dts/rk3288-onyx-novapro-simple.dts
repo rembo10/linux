@@ -264,6 +264,20 @@
 		#clock-cells = <0>;
 	};
 
+	xin32k: xin32k {
+		compatible = "fixed-clock";
+		clock-frequency = <32768>;
+		clock-output-names = "xin32k";
+		#clock-cells = <0>;
+	};
+
+	sdio_pwrseq: sdio-pwrseq {
+		compatible = "mmc-pwrseq-simple";
+		clocks = <&cru PLL_APLL>;
+		clock-names = "ext_clock";
+		reset-gpios = <&gpio4 RK_PD4 GPIO_ACTIVE_LOW>;
+	};
+
 	vcc_sys: vsys-regulator {
 		compatible = "regulator-fixed";
 		regulator-name = "vcc_sys";
@@ -298,7 +312,7 @@
 
 	sdio0: mmc@ff0d0000 {
 		compatible = "rockchip,rk3288-dw-mshc";
-		max-frequency = <150000000>;
+		max-frequency = <25000000>;
 		clocks = <&cru HCLK_SDIO0>, <&cru SCLK_SDIO0>,
 			 <&cru SCLK_SDIO0_DRV>, <&cru SCLK_SDIO0_SAMPLE>;
 		clock-names = "biu", "ciu", "ciu-drive", "ciu-sample";
@@ -307,7 +321,24 @@
 		reg = <0x0 0xff0d0000 0x0 0x4000>;
 		resets = <&cru SRST_SDIO0>;
 		reset-names = "reset";
-		status = "disabled";
+		bus-width = <4>;
+		cap-sd-highspeed;
+		cap-sdio-irq;
+		disable-wp;
+		mmc-pwrseq = <&sdio_pwrseq>;
+		non-removable;
+		num-slots = <1>;
+		pinctrl-names = "default";
+		pinctrl-0 = <&sdio0_bus4 &sdio0_cmd &sdio0_clk &sdio0_int>;
+		sd-uhs-sdr104;
+  	supports-sdio;
+		#address-cells = <1>;
+		#size-cells = <0>;
+		status = "okay";
+		wireless: wifi@1 {
+			compatible = "brcm,bcm4329-fmac";
+			reg = <1>;
+		};
 	};
 
 	emmc: mmc@ff0f0000 {
@@ -737,51 +768,6 @@
 		status = "disabled";
 	};
 
-	nandc: nandc@ff400000 {
-		compatible = "rockchip,rk-nandc";
-		reg = <0x0 0xff400000 0x0 0x4000>;
-		interrupts = <GIC_SPI 38 IRQ_TYPE_LEVEL_HIGH>;
-		nandc_id = <0>;
-		clocks = <&cru SCLK_NANDC0>, <&cru HCLK_NANDC0>;
-		clock-names = "clk_nandc", "hclk_nandc";
-		status = "okay";
-	};
-
-	usb_host0_ehci: usb@ff500000 {
-		compatible = "generic-ehci";
-		reg = <0x0 0xff500000 0x0 0x100>;
-		interrupts = <GIC_SPI 24 IRQ_TYPE_LEVEL_HIGH>;
-		clocks = <&cru HCLK_USBHOST0>;
-		phys = <&usbphy1>;
-		phy-names = "usb";
-		status = "okay";
-	};
-
-	/* NOTE: doesn't work on RK3288, but was fixed on RK3288W */
-	usb_host0_ohci: usb@ff520000 {
-		compatible = "generic-ohci";
-		reg = <0x0 0xff520000 0x0 0x100>;
-		interrupts = <GIC_SPI 41 IRQ_TYPE_LEVEL_HIGH>;
-		clocks = <&cru HCLK_USBHOST0>;
-		phys = <&usbphy1>;
-		phy-names = "usb";
-		status = "okay";
-	};
-
-	usb_host1: usb@ff540000 {
-		compatible = "rockchip,rk3288-usb", "rockchip,rk3066-usb",
-				"snps,dwc2";
-		reg = <0x0 0xff540000 0x0 0x40000>;
-		interrupts = <GIC_SPI 25 IRQ_TYPE_LEVEL_HIGH>;
-		clocks = <&cru HCLK_USBHOST1>;
-		clock-names = "otg";
-		dr_mode = "host";
-		phys = <&usbphy2>;
-		phy-names = "usb2-phy";
-		snps,reset-phy-on-wake;
-		status = "okay";
-	};
-
 	usb_otg: usb@ff580000 {
 		compatible = "rockchip,rk3288-usb", "rockchip,rk3066-usb",
 				"snps,dwc2";
@@ -796,14 +782,6 @@
 		phys = <&usbphy0>;
 		phy-names = "usb2-phy";
 		status = "okay";
-	};
-
-	usb_hsic: usb@ff5c0000 {
-		compatible = "generic-ehci";
-		reg = <0x0 0xff5c0000 0x0 0x100>;
-		interrupts = <GIC_SPI 26 IRQ_TYPE_LEVEL_HIGH>;
-		clocks = <&cru HCLK_HSIC>;
-		status = "disabled";
 	};
 
 	pwm0: pwm@ff680000 {
@@ -948,6 +926,7 @@
 		io_domains: io-domains {
 			compatible = "rockchip,rk3288-io-voltage-domain";
 			status = "okay";
+			sdcard-supply = <&vccio_sd>;
 			wifi-supply = <&vccio_wl>;
 		};
 
@@ -955,7 +934,7 @@
 			compatible = "rockchip,rk3288-usb-phy";
 			#address-cells = <1>;
 			#size-cells = <0>;
-			status = "disabled";
+			status = "okay";
 
 			usbphy0: usb-phy@320 {
 				#phy-cells = <0>;
@@ -967,25 +946,6 @@
 				reset-names = "phy-reset";
 			};
 
-			usbphy1: usb-phy@334 {
-				#phy-cells = <0>;
-				reg = <0x334>;
-				clocks = <&cru SCLK_OTGPHY1>;
-				clock-names = "phyclk";
-				#clock-cells = <0>;
-				resets = <&cru SRST_USBHOST0_PHY>;
-				reset-names = "phy-reset";
-			};
-
-			usbphy2: usb-phy@348 {
-				#phy-cells = <0>;
-				reg = <0x348>;
-				clocks = <&cru SCLK_OTGPHY2>;
-				clock-names = "phyclk";
-				#clock-cells = <0>;
-				resets = <&cru SRST_USBHOST1_PHY>;
-				reset-names = "phy-reset";
-			};
 		};
 	};
 
@@ -1039,9 +999,11 @@
 		compatible = "rockchip,iommu";
 		reg = <0x0 0xff914000 0x0 0x100>, <0x0 0xff915000 0x0 0x100>;
 		interrupts = <GIC_SPI 14 IRQ_TYPE_LEVEL_HIGH>;
+		interrupt-names = "isp_mmu";
 		clocks = <&cru ACLK_ISP>, <&cru HCLK_ISP>;
 		clock-names = "aclk", "iface";
 		#iommu-cells = <0>;
+		power-domains = <&power RK3288_PD_VIO>;
 		rockchip,disable-mmu-reset;
 		status = "okay";
 	};
