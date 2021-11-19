@@ -7,6 +7,7 @@
 #include <dt-bindings/interrupt-controller/arm-gic.h>
 #include <dt-bindings/pinctrl/rockchip.h>
 #include <dt-bindings/clock/rk3288-cru.h>
+#include <dt-bindings/clock/rockchip,rk808.h>
 #include <dt-bindings/power/rk3288-power.h>
 #include <dt-bindings/thermal/thermal.h>
 #include <dt-bindings/soc/rockchip,boot-mode.h>
@@ -217,17 +218,6 @@
 			reg = <0x0 0xfe000000 0x0 0x1000000>;
 		};
 
-		ramoops@80000000 {
-			compatible = "ramoops";
-			reg = <0x0 0x8000000 0x0 0xf0000>;
-			record-size = <0x20000>;
-			console-size = <0x80000>;
-			msg-size = <0x50000 0x50000>;
-		};
-
-		drm-logo@00000000 {
-			reg = <0x0 0x0 0x0 0x0>;
-		};
 	};
 
 	xin24m: oscillator {
@@ -369,7 +359,7 @@
 			interrupt-parent = <&gpio0>;
 			interrupts = <RK_PA4 IRQ_TYPE_LEVEL_LOW>;
 			pinctrl-names = "default";
-			pinctrl-0 = <&pmic_int &global_pwroff>;
+			pinctrl-0 = <&pmic_int>;
 			rockchip,system-power-controller;
 			wakeup-source;
 			#clock-cells = <1>;
@@ -618,28 +608,6 @@
 				};
 			};
 
-			battery {
-				compatible = "rk818-battery";
-				ocv_table = <0xd48 0xe37 0xe61 0xe73 0xe90 0xea1 0xeb0 0xeba 0xec3 0xece 0xedc 0xeee 0xf08 0xf2c 0xf49 0xf64 0xf7e 0xf9a 0xfce 0xff2 0x102d>;
-				design_capacity = <0xaf0>;
-				design_qmax = <0xaf0>;
-				bat_res = <0x64>;
-				max_input_current = <0x708>;
-				max_chrg_current = <0x708>;
-				max_chrg_voltage = <0x1068>;
-				sleep_enter_current = <0x12c>;
-				sleep_exit_current = <0x12c>;
-				power_off_thresd = <0xd48>;
-				zero_algorithm_vol = <0xf0a>;
-				energy_mode = <0x00>;
-				fb_temperature = <0x69>;
-				sample_res = <0x14>;
-				max_soc_offset = <0x3c>;
-				monitor_sec = <0x05>;
-				virtual_power = <0x00>;
-				power_dc2otg = <0x00>;
-				status = "enabled";
-			};
 		};
 	};
 
@@ -650,7 +618,7 @@
 		#address-cells = <1>;
 		#size-cells = <0>;
 		clock-names = "i2c";
-		clocks = <&cru &xin32k>;
+		clocks = <&cru PCLK_I2C1>;
 		pinctrl-names = "default";
 		pinctrl-0 = <&i2c1_xfer>;
 		status = "okay";
@@ -756,6 +724,8 @@
 		status = "okay";
 		bluetooth {
 			compatible = "brcm,bcm43438-bt";
+			clocks = <&rk818 RK808_CLKOUT1>;
+			clock-names = "ext_clock";	
 			host-wakeup-gpios    = <&gpio4 RK_PD7 GPIO_ACTIVE_HIGH>;
 			shutdown-gpios       = <&gpio4 RK_PD5 GPIO_ACTIVE_HIGH>;
 			device-wakeup-gpios  = <&gpio4 RK_PD2 GPIO_ACTIVE_HIGH>;
@@ -846,7 +816,7 @@
 		rockchip,hw-tshut-temp = <95000>;
 		rockchip,hw-tshut-mode = <0>;
 		rockchip,hw-tshut-polarity = <1>;
-		status = "disabled";
+		status = "okay";
 	};
 
 	usb_otg: usb@ff580000 {
@@ -897,7 +867,7 @@
 		reg = <0x0 0xff6b0000 0x0 0x20>;
 		interrupts = <GIC_SPI 66 IRQ_TYPE_LEVEL_HIGH>;
 		clocks = <&cru PCLK_TIMER>, <&xin24m>;
-		clock-names = "pclk", "timer";
+		clock-names = "timer", "pclk";
 	};
 
 	bus_intmem: sram@ff700000 {
@@ -1014,6 +984,16 @@
 		rockchip,grf = <&grf>;
 		#clock-cells = <1>;
 		#reset-cells = <1>;
+		assigned-clocks = <&cru PLL_GPLL>, <&cru PLL_CPLL>,
+				  <&cru PLL_NPLL>, <&cru ACLK_CPU>,
+				  <&cru HCLK_CPU>, <&cru PCLK_CPU>,
+				  <&cru ACLK_PERI>, <&cru HCLK_PERI>,
+				  <&cru PCLK_PERI>;
+		assigned-clock-rates = <594000000>, <400000000>,
+				       <500000000>, <300000000>,
+				       <150000000>, <75000000>,
+				       <300000000>, <150000000>,
+				       <75000000>;
 	};
 
 	grf: syscon@ff770000 {
@@ -1412,7 +1392,7 @@
 
 	sdio_pwrseq: sdio-pwrseq {
 		compatible = "mmc-pwrseq-simple";
-		clocks = <&cru PLL_APLL>;
+		clocks = <&rk818 RK808_CLKOUT1>;
 		clock-names = "ext_clock";
 		reset-gpios = <&gpio4 RK_PD4 GPIO_ACTIVE_LOW>;
 	};
