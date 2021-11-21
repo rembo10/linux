@@ -1022,7 +1022,7 @@ dtb-$(CONFIG_ARCH_RENESAS) += \
 	r9a06g032-rzn1d400-db.dtb \
 	sh73a0-kzm9g.dtb
 dtb-$(CONFIG_ARCH_ROCKCHIP) += \
-	rk3288-onyx-novapro-simple.dtb
+	rockchip-evb_rk3288.dtb
 dtb-$(CONFIG_ARCH_S3C24XX) += \
 	s3c2416-smdk2416.dtb
 dtb-$(CONFIG_ARCH_S3C64XX) += \

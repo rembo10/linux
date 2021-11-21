@@ -15,7 +15,7 @@
 / {
 	#address-cells = <2>;
 	#size-cells = <2>;
-	compatible = "rockchip,rk3288-th804", "rockchip,rk3288";
+	compatible = "rockchip,rk3288-evb-rk808", "rockchip,rk3288";
 	interrupt-parent = <&gic>;
 	model = "Onyx RK3288 Product avb";
 
@@ -34,7 +34,7 @@
 		serial2 = &uart2;
 	};
 
-	memory {
+	memory@0 {
 		device_type = "memory";
 		reg = <0x0 0x0 0x0 0x0>;
 	};
@@ -64,7 +64,7 @@
 			compatible = "arm,cortex-a12";
 			reg = <0x500>;
 			resets = <&cru SRST_CORE0>;
-			operating-points-v2 = <&cpu_opp_table>;
+			operating-points-v2 = <&opp_table_cpu>;
 			#cooling-cells = <2>; /* min followed by max */
 			dynamic-power-coefficient = <322>;
 			clocks = <&cru ARMCLK>;
@@ -76,7 +76,7 @@
 			compatible = "arm,cortex-a12";
 			reg = <0x501>;
 			resets = <&cru SRST_CORE1>;
-			operating-points-v2 = <&cpu_opp_table>;
+			operating-points-v2 = <&opp_table_cpu>;
 			enable-method = "psci";
 		};
 		cpu2: cpu@502 {
@@ -84,7 +84,7 @@
 			compatible = "arm,cortex-a12";
 			reg = <0x502>;
 			resets = <&cru SRST_CORE2>;
-			operating-points-v2 = <&cpu_opp_table>;
+			operating-points-v2 = <&opp_table_cpu>;
 			enable-method = "psci";
 		};
 		cpu3: cpu@503 {
@@ -92,19 +92,17 @@
 			compatible = "arm,cortex-a12";
 			reg = <0x503>;
 			resets = <&cru SRST_CORE3>;
-			operating-points-v2 = <&cpu_opp_table>;
+			operating-points-v2 = <&opp_table_cpu>;
 			enable-method = "psci";
 		};
 	};
 
-	cpu_opp_table: cpu-opp-table {
+	opp_table_cpu: opp-table-cpu {
 		compatible = "operating-points-v2";
 		opp-shared;
 		clocks = <&cru PLL_APLL>;
 		rockchip,avs-scale = <17>;
 		rockchip,max-volt = <1350000>;
-		nvmem-cells = <0x0a 0x0b 0x0c 0x0d 0x0e>;
-		nvmem-cell-names = "leakage", "special", "performance", "process", "performance-w";
 		rockchip,bin-scaling-sel = <0x00 0x11 0x01 0x19 0x02 0x1b 0x03 0x1f>;
 		rockchip,thermal-zone = "soc-thermal";
 		
@@ -190,23 +188,16 @@
 		
 	};
 
-	amba {
-		compatible = "arm,amba-bus";
-		#address-cells = <2>;
-		#size-cells = <2>;
-		ranges;
-
-		dmac_bus_ns: dma-controller@ff600000 {
-			compatible = "arm,pl330", "arm,primecell";
-			reg = <0x0 0xff600000 0x0 0x4000>;
-			interrupts = <GIC_SPI 0 IRQ_TYPE_LEVEL_HIGH>,
-				     <GIC_SPI 1 IRQ_TYPE_LEVEL_HIGH>;
-			#dma-cells = <1>;
-			arm,pl330-broken-no-flushp;
-			arm,pl330-periph-burst;
-			clocks = <&cru ACLK_DMAC1>;
-			clock-names = "apb_pclk";
-		};
+	dmac_bus_ns: dma-controller@ff600000 {
+		compatible = "arm,pl330", "arm,primecell";
+		reg = <0x0 0xff600000 0x0 0x4000>;
+		interrupts = <GIC_SPI 0 IRQ_TYPE_LEVEL_HIGH>,
+			     <GIC_SPI 1 IRQ_TYPE_LEVEL_HIGH>;
+		#dma-cells = <1>;
+		arm,pl330-broken-no-flushp;
+		arm,pl330-periph-burst;
+		clocks = <&cru ACLK_DMAC1>;
+		clock-names = "apb_pclk";
 	};
 
 	reserved-memory {
@@ -242,14 +233,6 @@
 		compatible = "rockchip,display-subsystem";
 		ports = <&vopb_out>, <&vopl_out>;
 		status = "okay";
-		logo-memory-region = <0x11>;
-
-		route {
-			route-rgb {
-				status = "okay";
-				connect = <&vopb_out_rgb>; 
-			};
-		};
 	};
 
 	sdio0: mmc@ff0d0000 {
@@ -355,7 +338,6 @@
 			compatible = "rockchip,rk818";
 			reg = <0x1c>;
 			status = "okay";
-			clock-output-names = "rk818-clkout1", "wifibt_32kin";
 			interrupt-parent = <&gpio0>;
 			interrupts = <RK_PA4 IRQ_TYPE_LEVEL_LOW>;
 			pinctrl-names = "default";
@@ -372,8 +354,6 @@
 			vcc8-supply = <&vcc_io>;
 			vcc9-supply = <&vcc_io>;
 			vddio-supply = <&vccio_pmu>;
-			boost-supply = <&vcc_sys>;
-			h_5v-supply = <&boost>;
 	
 			regulators {
 	
@@ -435,21 +415,6 @@
 					regulator-state-mem {
 						regulator-off-in-suspend;
 						regulator-suspend-microvolt = <3000000>;
-					};
-				};
-	
-				boost: DCDC_BOOST {
-					regulator-always-on;
-					regulator-boot-on;
-					regulator-min-microvolt = <5000000>;
-					regulator-max-microvolt = <5000000>;
-					regulator-name = "boost";
-	
-					regulator-state-standby {
-						regulator-off-in-suspend;
-					};
-					regulator-state-mem {
-						regulator-off-in-suspend;
 					};
 				};
 	
@@ -599,13 +564,6 @@
 					};
 				};
 	
-				otg_switch: OTG_SWITCH {
-					regulator-name = "otg_switch";
-	
-					regulator-state-mem {
-						regulator-off-in-suspend;
-					};
-				};
 			};
 
 		};
@@ -720,12 +678,13 @@
 		clocks = <&cru SCLK_UART0>, <&cru PCLK_UART0>;
 		clock-names = "baudclk", "apb_pclk";
 		pinctrl-names = "default";
-		pinctrl-0 = <&uart0_xfer &uart0_cts &uart0_rts>;
+		pinctrl-0 = <&uart0_xfer &uart0_cts>;
+		uart-has-rtscts;
 		status = "okay";
 		bluetooth {
 			compatible = "brcm,bcm43438-bt";
 			clocks = <&rk818 RK808_CLKOUT1>;
-			clock-names = "ext_clock";	
+			clock-names = "txco";	
 			host-wakeup-gpios    = <&gpio4 RK_PD7 GPIO_ACTIVE_HIGH>;
 			shutdown-gpios       = <&gpio4 RK_PD5 GPIO_ACTIVE_HIGH>;
 			device-wakeup-gpios  = <&gpio4 RK_PD2 GPIO_ACTIVE_HIGH>;
@@ -783,12 +742,12 @@
 				map0 {
 					trip = <&cpu_alert0>;
 					cooling-device = <&cpu0 THERMAL_NO_LIMIT THERMAL_NO_LIMIT>;
-					contribution = <1024>;
+					contribution = <100>;
 				};
 				map1 {
 					trip = <&cpu_alert0>;
 					cooling-device = <&gpu THERMAL_NO_LIMIT THERMAL_NO_LIMIT>;
-					contribution = <1024>;
+					contribution = <100>;
 				};
 			};
 		};
@@ -820,21 +779,19 @@
 	};
 
 	usb_otg: usb@ff580000 {
-		compatible = "rockchip,rk3288-usb", "rockchip,rk3066-usb",
-				"snps,dwc2";
+		compatible = "snps,dwc2";
 		reg = <0x0 0xff580000 0x0 0x40000>;
 		interrupts = <GIC_SPI 23 IRQ_TYPE_LEVEL_HIGH>;
-		clocks = <&usbphy0>, <&cru HCLK_OTG0>;
-		clock-names = "phyclk otg";
-		dr_mode = "otg";
+		clocks = <&cru HCLK_OTG0>;
 		g-np-tx-fifo-size = <16>;
 		g-rx-fifo-size = <275>;
 		g-tx-fifo-size = <256 128 128 64 64 32>;
-		g-use-dma;
+		pinctrl-names = "default";
+		pinctrl-0 = <&usb_pinctrl>;
+		clock-names = "otg";
+		dr_mode = "peripheral";
 		phys = <&usbphy0>;
 		phy-names = "usb2-phy";
-		resets = <&cru SRST_USBOTG_AHB>, <&cru SRST_USBOTG_PHY>, <&cru SRST_USBOTG_CON>;
-		reset-names = "otg_ahb", "otg_phy", "otg_controller";
 		status = "okay";
 	};
 
@@ -867,7 +824,7 @@
 		reg = <0x0 0xff6b0000 0x0 0x20>;
 		interrupts = <GIC_SPI 66 IRQ_TYPE_LEVEL_HIGH>;
 		clocks = <&cru PCLK_TIMER>, <&xin24m>;
-		clock-names = "timer", "pclk";
+		clock-names = "pclk", "timer";
 	};
 
 	bus_intmem: sram@ff700000 {
@@ -903,10 +860,10 @@
 
 			power-domain@RK3288_PD_VIO {
 				reg = <RK3288_PD_VIO>;
+				#power-domain-cells = <0>;
 				clocks = <&cru ACLK_IEP>,
 					 <&cru ACLK_ISP>,
 					 <&cru ACLK_RGA>,
-					 <&cru ACLK_VIP>,
 					 <&cru ACLK_VOP0>,
 					 <&cru ACLK_VOP1>,
 					 <&cru DCLK_VOP0>,
@@ -914,19 +871,9 @@
 					 <&cru HCLK_IEP>,
 					 <&cru HCLK_ISP>,
 					 <&cru HCLK_RGA>,
-					 <&cru HCLK_VIP>,
 					 <&cru HCLK_VOP0>,
 					 <&cru HCLK_VOP1>,
-					 <&cru PCLK_EDP_CTRL>,
-					 <&cru PCLK_HDMI_CTRL>,
 					 <&cru PCLK_LVDS_PHY>,
-					 <&cru PCLK_MIPI_CSI>,
-					 <&cru PCLK_MIPI_DSI0>,
-					 <&cru PCLK_MIPI_DSI1>,
-					 <&cru SCLK_EDP_24M>,
-					 <&cru SCLK_EDP>,
-					 <&cru SCLK_ISP_JPE>,
-					 <&cru SCLK_ISP>,
 					 <&cru SCLK_RGA>;
 				pm_qos = <&qos_vio0_iep>,
 					 <&qos_vio1_vop>,
@@ -941,6 +888,7 @@
 
 			power-domain@RK3288_PD_HEVC {
 				reg = <RK3288_PD_HEVC>;
+				#power-domain-cells = <0>;
 				clocks = <&cru ACLK_HEVC>,
 					 <&cru SCLK_HEVC_CABAC>,
 					 <&cru SCLK_HEVC_CORE>;
@@ -950,6 +898,7 @@
 
 			power-domain@RK3288_PD_VIDEO {
 				reg = <RK3288_PD_VIDEO>;
+				#power-domain-cells = <0>;
 				clocks = <&cru ACLK_VCODEC>,
 					 <&cru HCLK_VCODEC>;
 				pm_qos = <&qos_video>;
@@ -957,6 +906,7 @@
 
 			power-domain@RK3288_PD_GPU {
 				reg = <RK3288_PD_GPU>;
+				#power-domain-cells = <0>;
 				clocks = <&cru ACLK_GPU>;
 				pm_qos = <&qos_gpu_r>,
 					 <&qos_gpu_w>;
@@ -1024,7 +974,7 @@
 					reg = <0>;
 					#address-cells = <1>;
 					#size-cells = <0>;
-					vopb_in_rgb: endpoint@0 {
+					rgb_in_vopb: endpoint@0 {
 						reg = <0>;
 						remote-endpoint = <&vopb_out_rgb>;
 						status = "okay";
@@ -1068,7 +1018,7 @@
 		reg = <0x0 0xff800000 0x0 0x100>;
 		clocks = <&cru PCLK_WDT>;
 		interrupts = <GIC_SPI 79 IRQ_TYPE_LEVEL_HIGH>;
-		status = "disabled";
+		status = "okay";
 	};
 
 	i2s: i2s@ff890000 {
@@ -1152,7 +1102,7 @@
 
 			vopb_out_rgb: endpoint@5 {
 				reg = <5>;
-				remote-endpoint = <&vopb_in_rgb>;
+				remote-endpoint = <&rgb_in_vopb>;
 			};
 		};
 	};
@@ -1253,13 +1203,14 @@
 			     <GIC_SPI 8 IRQ_TYPE_LEVEL_HIGH>;
 		interrupt-names = "job", "mmu", "gpu";
 		clocks = <&cru ACLK_GPU>;
-		operating-points-v2 = <&gpu_opp_table>;
+		operating-points-v2 = <&opp_table_gpu>;
 		#cooling-cells = <2>; /* min followed by max */
 		power-domains = <&power RK3288_PD_GPU>;
+		mali-supply = <&vdd_gpu>;
 		status = "okay";
 	};
 
-	gpu_opp_table: gpu-opp-table {
+	opp_table_gpu: opp-table-gpu {
 		compatible = "operating-points-v2";
 
 		opp-100000000 {
@@ -1382,14 +1333,14 @@
 		      <0x0 0xffc06000 0x0 0x2000>;
 		interrupts = <GIC_PPI 9 0xf04>;
 	};
-
+/*
 	xin32k: xin32k {
 		compatible = "fixed-clock";
 		clock-frequency = <32768>;
 		clock-output-names = "xin32k";
 		#clock-cells = <0>;
 	};
-
+*/
 	sdio_pwrseq: sdio-pwrseq {
 		compatible = "mmc-pwrseq-simple";
 		clocks = <&rk818 RK808_CLKOUT1>;
@@ -1452,16 +1403,16 @@
 
 	leds {
 		compatible = "gpio-leds";
-		blue {
+		led-blue {
 			label = "blue";
 			gpios = <&gpio5 RK_PB4 GPIO_ACTIVE_LOW>;
 			default-state = "on";
 		};
-		red {
+		led-red {
 			label = "battery_charging";
 			gpios = <&gpio5 RK_PB5 GPIO_ACTIVE_LOW>;
 			default-state = "off";
-			linux,default-trigger = "battery-charging";
+			linux,default-trigger = "heartbeat";
 		};
 	};
 
@@ -1830,6 +1781,12 @@
 		captp {
 			captp_int: captp-int {
 				rockchip,pins = <8 RK_PB1 RK_FUNC_GPIO &pcfg_pull_up>;
+			};
+		};
+
+		usb {
+			usb_pinctrl: usb-pinctrl {
+				rockchip,pins = <5 RK_PB3 RK_FUNC_GPIO &pcfg_pull_up>;
 			};
 		};
 
