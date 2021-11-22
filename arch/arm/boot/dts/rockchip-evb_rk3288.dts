@@ -549,7 +549,7 @@
 			compatible = "edt,edt-ft5406";
 			reg = <0x8>;
 			interrupt-parent = <&gpio8>;
-			interrupts = <8 IRQ_TYPE_EDGE_FALLING>;
+			interrupts = <9 IRQ_TYPE_EDGE_FALLING>;
 			reset-gpios = <&gpio8 3 GPIO_ACTIVE_LOW>;
 			wake-gpios = <&gpio5 18 GPIO_ACTIVE_HIGH>;
 		};
@@ -929,42 +929,6 @@
 			dvp-supply = <&vcc_18>;
 		};
 
-		rgb {
-			compatible = "rockchip,rk3288-rgb";
-			pinctrl-names = "default", "sleep";
-			pinctrl-0 = <&lcdc_mcu_pins>;
-			pinctrl-1 = <&lcdc_sleep_pins>;
-			phys = <&video_phy>;
-			phy-names = "phy";
-			status = "okay";
-			rockchip,output-mcu;
-			ports {
-				#address-cells = <1>;
-				#size-cells = <0>;
-				port@0 {
-					reg = <0>;
-					#address-cells = <1>;
-					#size-cells = <0>;
-					rgb_in_vopb: endpoint@0 {
-						reg = <0>;
-						remote-endpoint = <&vopb_out_rgb>;
-						status = "okay";
-					};
-					rgb_in_vopl: endpoint@1 {
-						reg = <1>;
-						remote-endpoint = <&vopl_out_rgb>;
-						status = "disabled";
-					};
-				};
-				port@1 {
-					reg = <1>;
-					rgb_endpoint: endpoint {
-						remote-endpoint = <&eink_endpoint>;
-						status = "okay";
-					};
-				};
-			};
-		};
 
 		usbphy: usbphy {
 			compatible = "rockchip,rk3288-usb-phy";
@@ -1073,9 +1037,9 @@
 			#address-cells = <1>;
 			#size-cells = <0>;
 
-			vopb_out_rgb: endpoint@5 {
-				reg = <5>;
-				remote-endpoint = <&rgb_in_vopb>;
+			vopb_out_lvds: endpoint@3 {
+				reg = <3>;
+				remote-endpoint = <&lvds_in_vopb>;
 			};
 		};
 	};
@@ -1107,9 +1071,9 @@
 			#address-cells = <1>;
 			#size-cells = <0>;
 
-			vopl_out_rgb: endpoint@5 {
-				reg = <5>;
-				remote-endpoint = <&rgb_in_vopl>;
+			vopl_out_lvds: endpoint@3 {
+				reg = <3>;
+				remote-endpoint = <&lvds_in_vopl>;
 			};
 		};
 	};
@@ -1126,14 +1090,44 @@
 		status = "okay";
 	};
 
-	video_phy: video-phy@ff96c000 {
-		compatible = "rockchip,rk3288-video-phy";
+	lvds: lvds@ff96c000 {
+		compatible = "rockchip,rk3288-lvds";
 		reg = <0x0 0xff96c000 0x0 0x4000>;
 		clocks = <&cru PCLK_LVDS_PHY>;
-		clock-names = "pclk";
-		#phy-cells = <0>;
-		power-domains = <&power RK3288_PD_VIO>;
+		clock-names = "pclk_lvds";
+		pinctrl-names = "lcdc";
+		pinctrl-0 = <&lcdc_ctl>;
+		avdd1v0-supply = <&vdd10_lcd>;
+		avdd1v8-supply = <&vcc18_lcd>;
+		avdd3v3-supply = <&vcca_codec>;
+		rockchip,grf = <&grf>;
+		rockchip,output = "rgb";
 		status = "okay";
+
+		ports {
+			#address-cells = <1>;
+			#size-cells = <0>;
+
+			lvds_in: port@0 {
+				reg = <0>;
+				#address-cells = <1>;
+				#size-cells = <0>;
+				lvds_in_vopb: endpoint@0 {
+					reg = <0>;
+					remote-endpoint = <&vopb_out_lvds>;
+				};
+				lvds_in_vopl: endpoint@1 {
+					reg = <1>;
+					remote-endpoint = <&vopl_out_lvds>;
+				};
+			};
+			lvds_out: port@1 {
+				reg = <1>;
+				lvds_out_panel: endpoint {
+					remote-endpoint = <&panel_in_lvds>;
+				};
+			};
+		};
 	};
 
 	vpu: video-codec@ff9a0000 {
@@ -1335,22 +1329,18 @@
 	vcc_lcd: vcc-lcd {
 		compatible = "regulator-fixed";
 		regulator-name = "vcc_lcd";
-		enable-active-high;
 		regulator-boot-on;
-		gpio = <&gpio7 RK_PA3 GPIO_ACTIVE_LOW>;
-		pinctrl-names = "default";
-		pinctrl-0 = <&lcd_en>;
+		gpio = <&gpio7 RK_PA3 GPIO_ACTIVE_HIGH>;
 		vin-supply = <&vcc_sys>;
 	};
 
 	eink_panel {
-		compatible = "lg,lp079qx1-sp0v";
+		compatible = "eink,ed078kh4";
 		status = "okay";
 		power-supply = <&vcc_lcd>;
-    enable-gpios = <&gpio7 RK_PA4 GPIO_ACTIVE_HIGH>;
 		port {
-			eink_endpoint: endpoint {
-				remote-endpoint = <&rgb_endpoint>;
+			panel_in_lvds: endpoint {
+				remote-endpoint = <&lvds_out_panel>;
 			};
 		};
 	};
@@ -1606,18 +1596,20 @@
 		};
 
 		lcdc {
-			lcdc_rgb_pins: lcdc-rgb-pins {
-				rockchip,pins = <1 RK_PD3 1 &pcfg_pull_none>, <1 RK_PD2 1 &pcfg_pull_none>,
-					<1 RK_PD1 1 &pcfg_pull_none>, <1 RK_PD0 1 &pcfg_pull_none>;
+			lcdc_ctl: lcdc-ctl {
+				rockchip,pins = <1 RK_PD0 1 &pcfg_pull_none_12ma>, 
+					<1 RK_PD1 1 &pcfg_pull_none>,
+					<1 RK_PD2 1 &pcfg_pull_none>, 
+					<1 RK_PD3 1 &pcfg_pull_none>;
 			};
-			lcdc_mcu_pins: lcdc-mcu-pins {
+			/*lcdc_mcu_pins: lcdc-mcu-pins {
 				rockchip,pins = <1 RK_PD3 0 &pcfg_pull_none>, <1 RK_PD2 0 &pcfg_pull_none>,
 					<1 RK_PD1 0 &pcfg_pull_none>, <1 RK_PD0 1 &pcfg_pull_none_12ma>;
 			};
 			lcdc_sleep_pins: lcdc-sleep-pins {
 				rockchip,pins = <1 RK_PD3 0 &pcfg_pull_none>, <1 RK_PD2 0 &pcfg_pull_none>,
 					<1 RK_PD1 0 &pcfg_pull_none>, <1 RK_PD0 0 &pcfg_pull_none>;
-			};
+			};*/
 		};
 
 		sdio0 {
