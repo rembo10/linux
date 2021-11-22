@@ -628,7 +628,7 @@
 			reg = <0x9>;
 			hid-descr-addr = <0x1>;
 			interrupt-parent = <&gpio7>;
-			interrupts = <10 2>;
+			interrupts = <14 GPIO_ACTIVE_HIGH>;
 		};
 	};
 
