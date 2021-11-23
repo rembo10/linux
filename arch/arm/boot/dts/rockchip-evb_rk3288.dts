@@ -560,11 +560,10 @@
 			interrupts = <8 IRQ_TYPE_EDGE_FALLING>;
 		};
 		max17135@48 {
-			pinctrl-names = "default";
-			pinctrl-0 = <&max17135_gpios>;
-			pass_num = <2>;
 			compatible = "maxim,max17135";
 			reg = <0x48>;
+			pinctrl-names = "default";
+			pinctrl-0 = <&max17135_gpios>;
 			status = "okay";
 			gvee_pwrup = <0>;
 			vneg_pwrup = <10>;
@@ -579,23 +578,25 @@
 			gpio_pmic_vcom_ctrl = <&gpio8 RK_PB0 GPIO_ACTIVE_HIGH>;
 			gpio_pmic_wakeup = <&gpio8 RK_PA6 GPIO_ACTIVE_HIGH>;
 			gpio_pmic_v3p3 = <&gpio5 RK_PC1 GPIO_ACTIVE_LOW>;
+			gpio_pmic_intr = <&gpio5 RK_PC0 GPIO_ACTIVE_LOW>;
 			regulators {
-				DISPLAY {
+				DISPLAY_reg: DISPLAY {
 					regulator-name = "DISPLAY";
 				};
-				VCOM {
+				VCOM_reg: VCOM {
 					regulator-name = "VCOM";
 					regulator-max-microvolt = <4325000>;
 					regulator-min-microvolt = <500000>;
 				};
-				V3P3 {
+				V3P3_reg: V3P3 {
 					regulator-name = "V3P3";
 				};
-				TMST {
+				TMST_reg: TMST {
 					regulator-name = "TMST";
 				};
       };
     };
+
     lm3630a@38 {
 			compatible = "ti,lm3630a";
 			reg = <0x38>;
@@ -1097,6 +1098,7 @@
 		clock-names = "pclk_lvds";
 		pinctrl-names = "lcdc";
 		pinctrl-0 = <&lcdc_ctl>;
+		power-domains = <&power RK3288_PD_VIO>;
 		avdd1v0-supply = <&vdd10_lcd>;
 		avdd1v8-supply = <&vcc18_lcd>;
 		avdd3v3-supply = <&vcca_codec>;
@@ -1757,6 +1759,7 @@
 						<8 RK_PB0 RK_FUNC_GPIO &pcfg_pull_up>;
 			};
 		};
+
 	};
 
 };
