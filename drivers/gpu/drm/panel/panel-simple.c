@@ -2178,6 +2178,33 @@ static const struct panel_desc edt_etmv570g2dhu = {
 	.connector_type = DRM_MODE_CONNECTOR_DPI,
 };
 
+static const struct display_timing eink_vb3300_ghb_timing = {
+	.pixelclock = { 34000000, 34000000, 34000000 },
+	.hactive = { 1404, 1404, 1404 },
+	.hfront_porch = { 1, 1, 1 },
+	.hback_porch = { 1, 1, 1 },
+	.hsync_len = { 1, 1, 1 },
+	.vactive = { 1872, 1872, 1872 },
+	.vfront_porch = { 1, 1, 1 },
+	.vback_porch = { 5, 5, 5 },
+	.vsync_len = { 1, 1, 1 },
+	.flags = DISPLAY_FLAGS_HSYNC_LOW | DISPLAY_FLAGS_VSYNC_LOW |
+		 DISPLAY_FLAGS_DE_HIGH | DISPLAY_FLAGS_PIXDATA_POSEDGE,
+};
+
+static const struct panel_desc eink_vb3300_ghb = {
+	.timings = &eink_vb3300_ghb_timing,
+	.num_timings = 1,
+	.bpc = 6,
+	.size = {
+		.width = 118,
+		.height = 158,
+	},
+	.bus_format = MEDIA_BUS_FMT_RGB888_1X24,
+	.bus_flags = DRM_BUS_FLAG_DE_HIGH | DRM_BUS_FLAG_PIXDATA_DRIVE_POSEDGE,
+	.connector_type = DRM_MODE_CONNECTOR_DPI,
+};
+
 static const struct display_timing eink_vb3300_kca_timing = {
 	.pixelclock = { 40000000, 40000000, 40000000 },
 	.hactive = { 334, 334, 334 },
@@ -4624,6 +4651,9 @@ static const struct of_device_id platform_of_match[] = {
 	}, {
 		.compatible = "edt,etmv570g2dhu",
 		.data = &edt_etmv570g2dhu,
+	}, {
+		.compatible = "eink,vb3300-ghb",
+		.data = &eink_vb3300_ghb,
 	}, {
 		.compatible = "eink,vb3300-kca",
 		.data = &eink_vb3300_kca,
