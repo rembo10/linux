@@ -48,7 +48,7 @@
 		interrupt-affinity = <&cpu0>, <&cpu1>, <&cpu2>, <&cpu3>;
 	};
 
-	cpus {
+	cpus: cpus {
 		#address-cells = <1>;
 		#size-cells = <0>;
 		enable-method = "rockchip,rk3066-smp";
@@ -915,8 +915,6 @@
 				reg = <0x334>;
 				clocks = <&cru SCLK_OTGPHY1>;
 				clock-names = "phyclk";
-				#clock-cells = <0>;
-				resets = <&cru SRST_USBHOST0_PHY>;
 				reset-names = "phy-reset";
 			};
 
