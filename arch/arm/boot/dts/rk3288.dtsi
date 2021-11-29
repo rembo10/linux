@@ -718,7 +718,7 @@
 		#address-cells = <1>;
 		#size-cells = <1>;
 		ranges = <0 0x0 0xff700000 0x18000>;
-		smp-sram@0 {
+		smp_sram: smp-sram@0 {
 			compatible = "rockchip,rk3066-smp-sram";
 			reg = <0x00 0x10>;
 		};
