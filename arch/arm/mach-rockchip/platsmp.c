@@ -372,3 +372,6 @@ static const struct smp_operations rockchip_smp_ops __initconst = {
 
 CPU_METHOD_OF_DECLARE(rk3036_smp, "rockchip,rk3036-smp", &rk3036_smp_ops);
 CPU_METHOD_OF_DECLARE(rk3066_smp, "rockchip,rk3066-smp", &rockchip_smp_ops);
+
+extern const struct smp_operations psci_smp_ops;
+CPU_METHOD_OF_DECLARE(rk3036_smp2, "rockchip,psci-smp", &psci_smp_ops);
