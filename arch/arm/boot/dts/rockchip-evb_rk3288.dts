@@ -15,7 +15,7 @@
 
 	memory@0 {
 		device_type = "memory";
-		reg = <0x0 0x0 0x0 0x0>;
+		reg = <0x0 0x0 0x0 0x80000000>;
 	};
 
 	psci {
@@ -36,7 +36,7 @@
 		clocks = <&rk818 RK808_CLKOUT1>;
 		clock-names = "ext_clock";
 		pinctrl-names = "default";
-		pinctrl-0 = <&sdio0_pwr>;
+		pinctrl-0 = <&wifi_enable_h>;
 		reset-gpios = <&gpio4 RK_PD4 GPIO_ACTIVE_LOW>;
 	};
 
@@ -107,9 +107,8 @@
 		};
 	};
 
-
 };
-	
+
 /delete-node/ &timer;
 
 &cpus {
@@ -121,19 +120,7 @@
 };
 
 &dmac_bus_s {
-	status = "disabled";
-};
-
-&dmac_bus_ns {
-	status = "okay";	
-};
-
-&bus_intmem {
-	status = "disabled";
-};
-
-&efuse {
-	status = "disabled";
+	reg = <0x0 0xff600000 0x0 0x4000>;
 };
 
 &sdio0 {
@@ -146,7 +133,7 @@
 	non-removable;
 	num-slots = <1>;
 	pinctrl-names = "default";
-	pinctrl-0 = <&sdio0_bus4 &sdio0_cmd &sdio0_clk>;
+	pinctrl-0 = <&sdio0_bus4 &sdio0_cmd &sdio0_clk &sdio0_int>;
 	sd-uhs-sdr104;
 	supports-sdio;
 	#address-cells = <1>;
@@ -246,8 +233,11 @@
 				regulator-boot-on;
 				regulator-min-microvolt = <750000>;
 				regulator-max-microvolt = <1250000>;
-				regulator-ramp-delay = <6000>;
+				regulator-ramp-delay = <6001>;
 
+				regulator-state-standby {
+					regulator-off-in-suspend;
+				};
 				regulator-state-mem {
 					regulator-off-in-suspend;
 				};
@@ -431,8 +421,17 @@
 				};
 			};
 
-		};
+			OTG_SWITCH {
+				regulator-name = "otg_switch";
+				regulator-state-standby {
+					regulator-off-in-suspend;
+				};
+				regulator-state-mem {
+					regulator-off-in-suspend;
+				};
+			};
 
+		};
 	};
 };
 
@@ -519,6 +518,16 @@
 	status = "okay";
 };
 
+&io_domains {
+	status = "okay";
+	wifi-supply = <&vccio_wl>;
+	dvp-supply = <&vcc_18>;
+};
+
+&usbphy {
+	status = "okay";
+};
+
 &usb_otg {
 	dr_mode = "peripheral";
 	status = "okay";
@@ -526,6 +535,18 @@
 
 &pwm0 {
 	status = "okay";
+};
+
+&bus_intmem {
+	status = "disabled";
+};
+
+&smp_sram {
+	status = "disabled";
+};
+
+&efuse {
+	status = "disabled";
 };
 
 &cru {
@@ -639,6 +660,12 @@
 		};
 	};
 
+	sdio-pwrseq {
+		wifi_enable_h: wifi-enable-h {
+			rockchip,pins = <4 RK_PD4 RK_FUNC_GPIO &pcfg_pull_none>;
+		};
+	};
+
 	stylus {
 		wacom_int: wacom-int {
 			rockchip,pins = <7 RK_PB6 RK_FUNC_GPIO &pcfg_pull_up>;
@@ -667,5 +694,4 @@
 					<8 RK_PB0 RK_FUNC_GPIO &pcfg_pull_up>;
 		};
 	};
-
 };
