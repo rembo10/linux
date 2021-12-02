@@ -36,8 +36,8 @@
 		clocks = <&rk818 RK808_CLKOUT1>;
 		clock-names = "ext_clock";
 		pinctrl-names = "default";
-		pinctrl-0 = <&wifi_enable_h>;
-		reset-gpios = <&gpio4 RK_PD4 GPIO_ACTIVE_LOW>;
+		pinctrl-0 = <&wifi_enable_h &chip_enable_h>;
+		reset-gpios = <&gpio4 RK_PD4 GPIO_ACTIVE_LOW>, <&gpio7 RK_PB0 GPIO_ACTIVE_LOW>;
 	};
 
 	vcc_sys: vsys-regulator {
@@ -217,6 +217,7 @@
 				regulator-boot-on;
 				regulator-min-microvolt = <750000>;
 				regulator-max-microvolt = <1250000>;
+				regulator-ramp-delay = <6001>;
 				regulator-state-standy {
 					regulator-on-in-suspend;
 					regulator-suspend-microvolt = <1000000>;
@@ -529,7 +530,7 @@
 };
 
 &usb_otg {
-	dr_mode = "peripheral";
+	dr_mode = "otg";
 	status = "okay";
 };
 
@@ -663,6 +664,9 @@
 	sdio-pwrseq {
 		wifi_enable_h: wifi-enable-h {
 			rockchip,pins = <4 RK_PD4 RK_FUNC_GPIO &pcfg_pull_none>;
+		};
+		chip_enable_h: chip-enable-h {
+			rockchip,pins = <7 RK_PB0 RK_FUNC_GPIO &pcfg_pull_none>;
 		};
 	};
 
