@@ -90,7 +90,7 @@
 			label = "back button";
 		};
 		cover {
-			gpios = <&gpio7 RK_PB6 GPIO_ACTIVE_LOW>;
+			gpios = <&gpio7 RK_PB5 GPIO_ACTIVE_LOW>;
 			linux,code = <KEY_POWER>;
 			label = "cover";
 			wakeup-source;
@@ -148,9 +148,11 @@
 	wireless: wifi@1 {
 		compatible = "brcm,bcm4329-fmac";
 		reg = <1>;
+/*
 		interrupt-parent = <&gpio4>;
-		interrupts = <30 IRQ_TYPE_EDGE_FALLING>;
+		interrupts = <30 IRQ_TYPE_NONE>;
 		interrupt-names = "host-wake";
+*/
 	};
 };
 
@@ -518,7 +520,10 @@
 	wacom@9 {
 		compatible = "hid-over-i2c";
 		reg = <0x9>;
+		pinctrl-names = "default";
+		pinctrl-0 = <&wacom_int>;
 		hid-descr-addr = <0x1>;
+		reset-gpios = <&gpio5 19 GPIO_ACTIVE_LOW>;
 		interrupt-parent = <&gpio7>;
 		interrupts = <14 IRQ_TYPE_NONE>;
 	};
@@ -684,12 +689,6 @@
 	stylus {
 		wacom_int: wacom-int {
 			rockchip,pins = <7 RK_PB6 RK_FUNC_GPIO &pcfg_pull_up>;
-		};
-	};
-
-	captp {
-		captp_int: captp-int {
-			rockchip,pins = <8 RK_PB1 RK_FUNC_GPIO &pcfg_pull_up>;
 		};
 	};
 
