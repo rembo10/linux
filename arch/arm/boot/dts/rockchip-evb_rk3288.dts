@@ -2,7 +2,7 @@
 /dts-v1/;
 
 #include <dt-bindings/input/input.h>
-#include <dt-bindings/input/linux-event-codes.h>
+#include <dt-bindings/input/gpio-keys.h>
 #include <dt-bindings/clock/rockchip,rk808.h>
 #include "rk3288.dtsi"
 
@@ -101,12 +101,12 @@
 	leds {
 		compatible = "gpio-leds";
 		led-blue {
-			label = "blue";
+			label = "blue led";
 			gpios = <&gpio5 RK_PB4 GPIO_ACTIVE_LOW>;
 			default-state = "on";
 		};
 		led-red {
-			label = "battery_charging";
+			label = "red led";
 			gpios = <&gpio5 RK_PB5 GPIO_ACTIVE_LOW>;
 			default-state = "off";
 			linux,default-trigger = "heartbeat";
@@ -148,6 +148,9 @@
 	wireless: wifi@1 {
 		compatible = "brcm,bcm4329-fmac";
 		reg = <1>;
+		interrupt-parent = <&gpio4>;
+		interrupts = <30 IRQ_TYPE_EDGE_FALLING>;
+		interrupt-names = "host-wake";
 	};
 };
 
