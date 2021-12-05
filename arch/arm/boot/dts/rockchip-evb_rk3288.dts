@@ -521,9 +521,9 @@
 		compatible = "hid-over-i2c";
 		reg = <0x9>;
 		pinctrl-names = "default";
-		pinctrl-0 = <&wacom_int>;
+		pinctrl-0 = <&wacom_int &wacom_gpios>;
 		hid-descr-addr = <0x1>;
-		reset-gpios = <&gpio5 19 GPIO_ACTIVE_LOW>;
+		reset-gpio = <&gpio5 19 GPIO_ACTIVE_LOW>;
 		interrupt-parent = <&gpio7>;
 		interrupts = <14 IRQ_TYPE_NONE>;
 	};
@@ -689,6 +689,9 @@
 	stylus {
 		wacom_int: wacom-int {
 			rockchip,pins = <7 RK_PB6 RK_FUNC_GPIO &pcfg_pull_up>;
+		};
+		wacom_gpios: wacom-gpios {
+			rockchip,pins = <5 RK_PC3 RK_FUNC_GPIO &pcfg_pull_none>;
 		};
 	};
 
